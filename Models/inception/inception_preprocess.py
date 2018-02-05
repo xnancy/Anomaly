@@ -7,6 +7,7 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import tensorflow.contrib.slim.nets as nets
 import os
+import numpy as np
 
 # Copyright 2016 The TensorFlow Authors. All Rights Reserved.
 #
@@ -415,6 +416,12 @@ restorer = tf.train.Saver(variables_to_restore)
 # init function 
 init = tf.initialize_all_variables()
 
+# process image sample 
+filename_queue = tf.train.string_input_producer(['dog_image.png'])  #list of files to read
+reader = tf.WholeFileReader()
+key, value = reader.read(filename_queue)
+image = tf.image.decode_png(value)                         #use png or jpg decoder based on your files.
+
 with tf.Session() as sess:
     sess.run(init)
     restorer.restore(sess,model_path)
@@ -422,13 +429,23 @@ with tf.Session() as sess:
     # get layer before auxiliary logits pooling 
     pre_pool = end_points['Mixed_7d']
 
-    # test on a random image
+    # test on a random image or dog image 
     images_rand = tf.random_uniform((1, 299, 299, 3))
+    # Get an image tensor and print its value.
+    # IMPORTANT!!!! Coordinate the loading of image files.
+    coord = tf.train.Coordinator()
+    threads = tf.train.start_queue_runners(coord=coord)
+    image_dog = sess.run(image)
+    spliced_dog = tf.slice(image_dog, [50,50,0], [299, 299, 3]) 
+    input_dog = sess.run(spliced_dog)
+    dog = np.expand_dims(input_dog, axis=0)
+    # Finish off the filename queue coordinator.
+    coord.request_stop()
+    coord.join(threads)
+
 
     # evaluate on images_rand
-    logits_out, pre_pool_out = sess.run([logits, pre_pool], {images: images_rand.eval()})
+    logits_out, pre_pool_out = sess.run([logits, pre_pool], {images: dog})
     print(pre_pool_out)
+    print(np.argmax(logits_out))
     print("model restored!")
-    
-
- 
