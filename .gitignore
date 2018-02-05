@@ -1,0 +1,5 @@
+# ignore checkpoint files 
+*.ckpt
+
+# ignore compressed data 
+*.gz
