@@ -388,17 +388,23 @@ inception_v4_arg_scope = inception_arg_scope
 
 
 ################
+from os import listdir
+from os.path import isfile, join
+
 tf.reset_default_graph()
 
 # Specify where the pretrained Model is saved.
 model_path = 'inception_v4.ckpt'
 
+print("reached0") 
 # Specify where the new model will live
-log_dir = 'resnet_log/'
+# log_dir = 'resnet_log/'
 
 tf.reset_default_graph()
 
 images = tf.placeholder(tf.float32, [None, 299, 299, 3])
+
+print("reached1") 
 
 # with slim.arg_scope(resnet2.resnet_arg_scope()):
 with slim.arg_scope(inception_v4_arg_scope()):
@@ -407,20 +413,25 @@ with slim.arg_scope(inception_v4_arg_scope()):
 # check that the file path exists 
 assert(os.path.isfile(model_path)) 
 
+print("reached2") 
 # create function to restore variables (can specify variables to exclude in get_variables_to_restore)
 variables_to_restore = tf.contrib.framework.get_variables_to_restore()
 
+print("A") 
 # variable restorer 
 restorer = tf.train.Saver(variables_to_restore)
-
+print("B") 
 # init function 
 init = tf.initialize_all_variables()
 
+print("reached3") 
+
 # process image sample 
-filename_queue = tf.train.string_input_producer(['dog_image.png'])  #list of files to read
+files = [join("/home/ec2-user/Data/imagen_clean/", f) for f in listdir("/home/ec2-user/Data/imagen_clean/") if isfile(join("/home/ec2-user/Data/imagen_clean/", f))]
+filename_queue = tf.train.string_input_producer(files)  #list of files to read
 reader = tf.WholeFileReader()
-key, value = reader.read(filename_queue)
-image = tf.image.decode_png(value)                         #use png or jpg decoder based on your files.
+
+print("reached") 
 
 with tf.Session() as sess:
     sess.run(init)
@@ -430,22 +441,32 @@ with tf.Session() as sess:
     pre_pool = end_points['Mixed_7d']
 
     # test on a random image or dog image 
-    images_rand = tf.random_uniform((1, 299, 299, 3))
+    # images_rand = tf.random_uniform((1, 299, 299, 3))
     # Get an image tensor and print its value.
     # IMPORTANT!!!! Coordinate the loading of image files.
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(coord=coord)
-    image_dog = sess.run(image)
-    spliced_dog = tf.slice(image_dog, [50,50,0], [299, 299, 3]) 
-    input_dog = sess.run(spliced_dog)
-    dog = np.expand_dims(input_dog, axis=0)
+    
+    for x in range(0,8055): 
+        key, value = reader.read(filename_queue) 
+        image = tf.image.decode_jpeg(value) 
+        image_dog = sess.run(image)
+        spliced_dog = tf.image.resize_images(image_dog, [299, 299])
+        # spliced_dog = tf.slice(image_dog, [50,50,0], [299, 299, 3]) 
+        input_dog = sess.run(spliced_dog)
+        dog = np.expand_dims(input_dog, axis=0)
+        logits_out, pre_pool_out = sess.run([logits, pre_pool], {images: dog})
+        print(key.eval())
+        print(np.argmax(logits_out))
+
+
     # Finish off the filename queue coordinator.
+    
     coord.request_stop()
     coord.join(threads)
 
 
     # evaluate on images_rand
-    logits_out, pre_pool_out = sess.run([logits, pre_pool], {images: dog})
-    print(pre_pool_out)
-    print(np.argmax(logits_out))
+    # print(pre_pool_out)
+    # print(np.argmax(logits_out))
     print("model restored!")
