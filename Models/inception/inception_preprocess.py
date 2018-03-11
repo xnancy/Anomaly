@@ -427,7 +427,10 @@ init = tf.initialize_all_variables()
 print("reached3") 
 
 # process image sample 
-files = [join("/home/ec2-user/Data/imagen_clean/", f) for f in listdir("/home/ec2-user/Data/imagen_clean/") if isfile(join("/home/ec2-user/Data/imagen_clean/", f))]
+# files = [join("/home/ec2-user/Data/imagen_clean/", f) for f in listdir("/home/ec2-user/Data/imagen_clean/") if isfile(join("/home/ec2-user/Data/imagen_clean/", f))]
+# can i even classify a dog?
+files = ["/home/ec2-user/Models/inception/dog_image.png"] # + files
+
 filename_queue = tf.train.string_input_producer(files)  #list of files to read
 reader = tf.WholeFileReader()
 
@@ -449,14 +452,21 @@ with tf.Session() as sess:
     
     for x in range(0,8055): 
         key, value = reader.read(filename_queue) 
-        image = tf.image.decode_jpeg(value) 
+        image = tf.image.decode_jpeg(value)
+        print(image.shape) 
         image_dog = sess.run(image)
-        spliced_dog = tf.image.resize_images(image_dog, [299, 299])
+        scaled_image_dog = image_dog / 256
+        spliced_dog = tf.image.resize_images(scaled_image_dog, [299, 299])
         # spliced_dog = tf.slice(image_dog, [50,50,0], [299, 299, 3]) 
         input_dog = sess.run(spliced_dog)
+        
         dog = np.expand_dims(input_dog, axis=0)
+        print("mean: ", np.mean(image_dog))        
+
         logits_out, pre_pool_out = sess.run([logits, pre_pool], {images: dog})
         print(key.eval())
+        print(logits_out.shape)
+        print(logits_out[0, 709])
         print(np.argmax(logits_out))
 
 
