@@ -427,9 +427,16 @@ init = tf.initialize_all_variables()
 print("reached3") 
 
 # process image sample 
-# files = [join("/home/ec2-user/Data/imagen_clean/", f) for f in listdir("/home/ec2-user/Data/imagen_clean/") if isfile(join("/home/ec2-user/Data/imagen_clean/", f))]
+files = [join("/home/ec2-user/Data/imagen_clean/", f) for f in listdir("/home/ec2-user/Data/imagen_clean/") if isfile(join("/home/ec2-user/Data/imagen_clean/", f))]
 # can i even classify a dog?
-files = ["/home/ec2-user/Models/inception/dog_image.png"] # + files
+
+#files = ["/home/ec2-user/Models/inception/dog_image.png"] # + files
+#files = ["/home/ec2-user/Data/imagen_clean/n04591157_" + s + "_tie.jpg" for s in ["1774", "197", "2640", "4443"]]
+
+legend = [None] * 1001
+with open("./key.txt") as keyfile:
+    for i in range(1, 1001):
+        legend[i] = keyfile.readline()
 
 filename_queue = tf.train.string_input_producer(files)  #list of files to read
 reader = tf.WholeFileReader()
@@ -453,13 +460,19 @@ with tf.Session() as sess:
     for x in range(0,8055): 
         key, value = reader.read(filename_queue) 
         image = tf.image.decode_jpeg(value)
-        print(image.shape) 
         image_dog = sess.run(image)
-        scaled_image_dog = image_dog / 256
-        spliced_dog = tf.image.resize_images(scaled_image_dog, [299, 299])
+        scaled_image_dog = ((image_dog / 256) - 0.5) * 2
+        n, m, rgb = image_dog.shape
+        s = min(n, m)
+        n_norm, m_norm = n/s, m/s
+        print(n, m, rgb)
+        spliced_dog = tf.image.crop_and_resize(np.resize(scaled_image_dog, (1, n, m, rgb)), [[(1 - n_norm) / 2, (1 - m_norm) / 2, (1 + n_norm) / 2, (1 + m_norm) / 2]], [0], [299, 299])[0]
+        # print(spliced_dog.shape)
+        # spliced_dog = tf.image.resize_images(scaled_image_dog, [299, 299])
+        # spliced_dog = tf.image.resize_image_with_crop_or_pad(scaled_image_dog, 299, 299)
         # spliced_dog = tf.slice(image_dog, [50,50,0], [299, 299, 3]) 
         input_dog = sess.run(spliced_dog)
-        
+        print(input_dog.shape) 
         dog = np.expand_dims(input_dog, axis=0)
         print("mean: ", np.mean(image_dog))        
 
@@ -467,7 +480,7 @@ with tf.Session() as sess:
         print(key.eval())
         print(logits_out.shape)
         print(logits_out[0, 709])
-        print(np.argmax(logits_out))
+        print(legend[np.argmax(logits_out)])
 
 
     # Finish off the filename queue coordinator.
