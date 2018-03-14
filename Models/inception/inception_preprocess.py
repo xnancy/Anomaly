@@ -404,7 +404,7 @@ tf.reset_default_graph()
 
 images = tf.placeholder(tf.float32, [None, 299, 299, 3])
 
-print("reached1") 
+# print("reached1") 
 
 # with slim.arg_scope(resnet2.resnet_arg_scope()):
 with slim.arg_scope(inception_v4_arg_scope()):
@@ -413,25 +413,26 @@ with slim.arg_scope(inception_v4_arg_scope()):
 # check that the file path exists 
 assert(os.path.isfile(model_path)) 
 
-print("reached2") 
+# print("reached2") 
 # create function to restore variables (can specify variables to exclude in get_variables_to_restore)
 variables_to_restore = tf.contrib.framework.get_variables_to_restore()
 
-print("A") 
+# print("A") 
 # variable restorer 
 restorer = tf.train.Saver(variables_to_restore)
-print("B") 
+# print("B") 
 # init function 
 init = tf.initialize_all_variables()
 
 print("reached3") 
 
 # process image sample 
-files = [join("/home/ec2-user/Data/imagen_clean/", f) for f in listdir("/home/ec2-user/Data/imagen_clean/") if isfile(join("/home/ec2-user/Data/imagen_clean/", f))]
+# files = [join("/home/ec2-user/Data/imagen_clean/", f) for f in listdir("/home/ec2-user/Data/imagen_clean/") if isfile(join("/home/ec2-user/Data/imagen_clean/", f))]
+files = [join("/home/ec2-user/Data/dragonfly/img/", f) for f in listdir("/home/ec2-user/Data/dragonfly/img/") if isfile(join("/home/ec2-user/Data/dragonfly/img/", f))]
 # can i even classify a dog?
-
-#files = ["/home/ec2-user/Models/inception/dog_image.png"] # + files
-#files = ["/home/ec2-user/Data/imagen_clean/n04591157_" + s + "_tie.jpg" for s in ["1774", "197", "2640", "4443"]]
+# files = ["/home/ec2-user/Models/inception/dog_image.png"] # + files
+# ties
+# files = ["/home/ec2-user/Data/imagen_clean/n04591157_" + s + "_tie.jpg" for s in ["1774", "197", "2640", "4443"]]
 
 legend = [None] * 1001
 with open("./key.txt") as keyfile:
@@ -460,13 +461,26 @@ with tf.Session() as sess:
     for x in range(0,8055): 
         key, value = reader.read(filename_queue) 
         image = tf.image.decode_jpeg(value)
-        image_dog = sess.run(image)
-        scaled_image_dog = ((image_dog / 256) - 0.5) * 2
-        n, m, rgb = image_dog.shape
-        s = min(n, m)
-        n_norm, m_norm = n/s, m/s
+        if image.dtype != tf.float32:
+            image = tf.image.convert_image_dtype(image, dtype=tf.float32) 
+        scaled_image_dog = (sess.run(image) - 0.5) * 2
+        # scaled_image_dog = ((image_dog / 256) - 0.5) * 2
+        n, m, rgb = scaled_image_dog.shape
+
         print(n, m, rgb)
-        spliced_dog = tf.image.crop_and_resize(np.resize(scaled_image_dog, (1, n, m, rgb)), [[(1 - n_norm) / 2, (1 - m_norm) / 2, (1 + n_norm) / 2, (1 + m_norm) / 2]], [0], [299, 299])[0]
+        #if (np.abs(np.log(n / m)) > 0.1):
+        #    continue
+        s = min(n, m)
+        rn, rm = n - s, m - s
+        
+        square_dog = tf.image.crop_to_bounding_box(scaled_image_dog, rn//2, rm//2, s, s)
+        spliced_dog = tf.image.resize_images(square_dog, [299, 299])
+
+
+        #n_norm, m_norm = n/s, m/s
+        #print(n, m, rgb)
+        #square_dog = tf.
+        #spliced_dog = tf.image.crop_and_resize(np.resize(scaled_image_dog, (1, n, m, rgb)), [[(1 - n_norm) / 2, (1 - m_norm) / 2, (1 + n_norm) / 2, (1 + m_norm) / 2]], [0], [299, 299])[0]
         # print(spliced_dog.shape)
         # spliced_dog = tf.image.resize_images(scaled_image_dog, [299, 299])
         # spliced_dog = tf.image.resize_image_with_crop_or_pad(scaled_image_dog, 299, 299)
@@ -474,7 +488,7 @@ with tf.Session() as sess:
         input_dog = sess.run(spliced_dog)
         print(input_dog.shape) 
         dog = np.expand_dims(input_dog, axis=0)
-        print("mean: ", np.mean(image_dog))        
+        # print("mean: ", np.mean(image_dog))        
 
         logits_out, pre_pool_out = sess.run([logits, pre_pool], {images: dog})
         print(key.eval())
