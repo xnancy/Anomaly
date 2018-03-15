@@ -396,7 +396,6 @@ tf.reset_default_graph()
 # Specify where the pretrained Model is saved.
 model_path = 'inception_v4.ckpt'
 
-print("reached0") 
 # Specify where the new model will live
 # log_dir = 'resnet_log/'
 
@@ -404,31 +403,23 @@ tf.reset_default_graph()
 
 images = tf.placeholder(tf.float32, [None, 299, 299, 3])
 
-# print("reached1") 
-
-# with slim.arg_scope(resnet2.resnet_arg_scope()):
 with slim.arg_scope(inception_v4_arg_scope()):
     logits, end_points = inception_v4(images, is_training=False)
 
 # check that the file path exists 
 assert(os.path.isfile(model_path)) 
 
-# print("reached2") 
 # create function to restore variables (can specify variables to exclude in get_variables_to_restore)
 variables_to_restore = tf.contrib.framework.get_variables_to_restore()
 
-# print("A") 
 # variable restorer 
 restorer = tf.train.Saver(variables_to_restore)
-# print("B") 
 # init function 
 init = tf.initialize_all_variables()
 
-print("reached3") 
-
 # process image sample 
-# files = [join("/home/ec2-user/Data/imagen_clean/", f) for f in listdir("/home/ec2-user/Data/imagen_clean/") if isfile(join("/home/ec2-user/Data/imagen_clean/", f))]
-files = [join("/home/ec2-user/Data/dragonfly/img/", f) for f in listdir("/home/ec2-user/Data/dragonfly/img/") if isfile(join("/home/ec2-user/Data/dragonfly/img/", f))]
+files = [join("/home/ec2-user/Data/imagen_clean/", f) for f in listdir("/home/ec2-user/Data/imagen_clean/") if isfile(join("/home/ec2-user/Data/imagen_clean/", f))]
+# files = [join("/home/ec2-user/Data/dragonfly/img/", f) for f in listdir("/home/ec2-user/Data/dragonfly/img/") if isfile(join("/home/ec2-user/Data/dragonfly/img/", f))]
 # can i even classify a dog?
 # files = ["/home/ec2-user/Models/inception/dog_image.png"] # + files
 # ties
@@ -439,64 +430,70 @@ with open("./key.txt") as keyfile:
     for i in range(1, 1001):
         legend[i] = keyfile.readline()
 
-filename_queue = tf.train.string_input_producer(files)  #list of files to read
-reader = tf.WholeFileReader()
+filename_queue = tf.train.string_input_producer(files) #list of files to read
 
-print("reached") 
+vectors = []
 
-with tf.Session() as sess:
+import csv
+import gc
+
+gc.enable()
+
+cfg = tf.ConfigProto(intra_op_parallelism_threads=10)
+
+with tf.Session(config=cfg) as sess, open('./imagen_prepool.csv', 'wb') as vfile:
     sess.run(init)
     restorer.restore(sess,model_path)
-
+    tf.initialize_all_variables()
     # get layer before auxiliary logits pooling 
     pre_pool = end_points['Mixed_7d']
 
-    # test on a random image or dog image 
-    # images_rand = tf.random_uniform((1, 299, 299, 3))
-    # Get an image tensor and print its value.
     # IMPORTANT!!!! Coordinate the loading of image files.
     coord = tf.train.Coordinator()
-    threads = tf.train.start_queue_runners(coord=coord)
-    
-    for x in range(0,8055): 
-        key, value = reader.read(filename_queue) 
-        image = tf.image.decode_jpeg(value)
+    threads = tf.train.start_queue_runners(sess=sess, coord=coord)
+    vectors = []
+
+    # for outputting the vectors
+    vec_writer = csv.writer(vfile)
+ 
+
+    reader = tf.WholeFileReader()
+    key, value = reader.read(filename_queue)
+    image = tf.image.decode_jpeg(value)
+    image = tf.image.convert_image_dtype(image, dtype=tf.float32)
+    scaled_image_dog = tf.multiply(tf.subtract(image, 0.5), 2)
+    image_shape = tf.shape(scaled_image_dog)
+    n, m = image_shape[0], image_shape[1]
+    s = tf.minimum(n, m)
+    rn, rm = tf.subtract(n, s), tf.subtract(m, s)
+    square_dog = tf.image.crop_to_bounding_box(scaled_image_dog, rn//2, rm//2, s, s)
+    spliced_dog = tf.image.resize_images(square_dog, [299, 299])
+    dog = tf.expand_dims(spliced_dog, axis = 0)
+
+    for x in range(len(files)):
+        print(x)
+        '''
+        # key, value = reader.read(filename_queue)
         if image.dtype != tf.float32:
             image = tf.image.convert_image_dtype(image, dtype=tf.float32) 
         scaled_image_dog = (sess.run(image) - 0.5) * 2
-        # scaled_image_dog = ((image_dog / 256) - 0.5) * 2
         n, m, rgb = scaled_image_dog.shape
-
-        print(n, m, rgb)
-        #if (np.abs(np.log(n / m)) > 0.1):
-        #    continue
         s = min(n, m)
         rn, rm = n - s, m - s
-        
         square_dog = tf.image.crop_to_bounding_box(scaled_image_dog, rn//2, rm//2, s, s)
         spliced_dog = tf.image.resize_images(square_dog, [299, 299])
-
-
-        #n_norm, m_norm = n/s, m/s
-        #print(n, m, rgb)
-        #square_dog = tf.
-        #spliced_dog = tf.image.crop_and_resize(np.resize(scaled_image_dog, (1, n, m, rgb)), [[(1 - n_norm) / 2, (1 - m_norm) / 2, (1 + n_norm) / 2, (1 + m_norm) / 2]], [0], [299, 299])[0]
-        # print(spliced_dog.shape)
-        # spliced_dog = tf.image.resize_images(scaled_image_dog, [299, 299])
-        # spliced_dog = tf.image.resize_image_with_crop_or_pad(scaled_image_dog, 299, 299)
-        # spliced_dog = tf.slice(image_dog, [50,50,0], [299, 299, 3]) 
         input_dog = sess.run(spliced_dog)
-        print(input_dog.shape) 
         dog = np.expand_dims(input_dog, axis=0)
-        # print("mean: ", np.mean(image_dog))        
-
-        logits_out, pre_pool_out = sess.run([logits, pre_pool], {images: dog})
-        print(key.eval())
-        print(logits_out.shape)
-        print(logits_out[0, 709])
+        '''
+        input_dog = sess.run(dog)
+        logits_out, pre_pool_out = sess.run([logits, pre_pool], {images: input_dog})
+        print(key.eval()) # name of file
+        print(pre_pool_out.shape)
+        pre_pool_vector = pre_pool_out.ravel().tolist()
+        vec_writer.writerow(pre_pool_vector)
         print(legend[np.argmax(logits_out)])
 
-
+    print("done!")
     # Finish off the filename queue coordinator.
     
     coord.request_stop()
