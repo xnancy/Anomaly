@@ -3,3 +3,12 @@
 
 # ignore compressed data 
 *.gz
+
+# ignore generated data files
+*.csv
+
+# ignore data files
+/Data
+
+# ignore swap files
+*.swp
