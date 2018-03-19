@@ -1,9 +1,13 @@
+import csv_utils
+
 import numpy as np
 import pandas as pd
 import csv
 import gc
 from scipy.sparse import csr_matrix
 from sklearn.decomposition import PCA
+from sklearn.decomposition import SparsePCA
+from sklearn.decomposition import MiniBatchSparsePCA
 from sklearn.random_projection import SparseRandomProjection
 
 ncols = 98305
@@ -37,21 +41,28 @@ srp = SparseRandomProjection(eps = 0.5)
 # srp.fit(shaper)
 
 print("Loading pie vectors...")
-# pie = decode_csv("./pie_prepool.csv")
-# pie = pie[1:190]
-pie = decode_lines_of_csv("./pie_prepool.csv", 190)
+pie = decode_csv("./pie_prepool.csv")
+print(pie.shape)
 print("Loading imagen vectors...")
-# imagen = decode_csv("./imagen_prepool_rerun.csv")
-# imagen = imagen[1:10]
-imagen = decode_lines_of_csv("./imagen_prepool_rerun.csv", 10)
+imagen = decode_csv("./imagen_prepool_rerun.csv")
+print(imagen.shape)
+
+
 print("Merging arrays...")
 contaminated = np.vstack((pie, imagen))
-del pie
-del imagen
 
-print("Sparse random projection...")
-small = srp.fit_transform(contaminated)
+#print("Sparse random projection...")
+#small = srp.fit_transform(contaminated)
 
-del contaminated
+print("Computing principal components...")
+spca = MiniBatchSparsePCA(n_components=200, verbose = 1)
+spca.fit(contaminated)
+
+spca_pie = spca.transform(pie)
+spca_imagen = spca.transform(imagen)
+
+encode_csv('./spca_pie.csv', spca_pie)
+encode_csv('./spca_imagen.csv', spca_imagen)
+
 
 
