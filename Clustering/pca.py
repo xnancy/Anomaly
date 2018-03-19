@@ -14,7 +14,7 @@ ncols = 98305
 
 def decode_csv(filename):
     names = [str(i) for i in range(ncols)]
-    data = pd.read_csv('./pie_prepool.csv', header=None, names=names)
+    data = pd.read_csv(filename, header=None, names=names)
     del data['0']
     val = data.values
     del data
