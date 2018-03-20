@@ -43,8 +43,8 @@ srp = SparseRandomProjection(eps = 0.5)
 print("Loading pie vectors...")
 pie = decode_csv("./pie_prepool.csv")
 print(pie.shape)
-print("Loading imagen vectors...")
-imagen = decode_csv("./imagen_prepool_rerun.csv")
+print("Loading sushi vectors...")
+imagen = decode_csv("./sushi_prepool.csv")
 print(imagen.shape)
 
 
@@ -55,14 +55,21 @@ contaminated = np.vstack((pie, imagen))
 #small = srp.fit_transform(contaminated)
 
 print("Computing principal components...")
-spca = MiniBatchSparsePCA(n_components=200, verbose = 1)
+spca = MiniBatchSparsePCA(n_components=20, verbose = 1)
 spca.fit(contaminated)
 
 spca_pie = spca.transform(pie)
 spca_imagen = spca.transform(imagen)
 
-encode_csv('./spca_pie.csv', spca_pie)
-encode_csv('./spca_imagen.csv', spca_imagen)
+csv_utils.encode_csv('./spca_pie.csv', spca_pie)
+csv_utils.encode_csv('./spca_sushi.csv', spca_imagen)
 
+pca = PCA(n_components = 20)
+pca.fit(contaminated)
 
+pca_pie = pca.transform(pie)
+pca_imagen = pca.transform(imagen)
+
+csv_utils.encode_csv('./pca_pie.csv', pca_pie)
+csv_utils.encode_csv('./pca_sushi.csv', pca_imagen)
 
