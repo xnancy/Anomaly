@@ -6,8 +6,8 @@ from sklearn.mixture import GaussianMixture
 from sklearn.mixture import BayesianGaussianMixture
 from csv_utils import decode_csv
 
-pie = decode_csv('./spca_pie_large.csv')
-imagen = decode_csv('./spca_sushi_large.csv')
+pie = decode_csv('./pca_pie2_large.csv')
+imagen = decode_csv('./pca_imagen_large.csv')
 # pie = decode_csv('./pie_prepool.csv')[1:]
 # imagen = decode_csv('./sushi_prepool.csv')[1:]
 
@@ -45,7 +45,7 @@ def solve(dim, proportion = 1.0):
         blue_pie[:, 0], blue_pie[:, 1], 'b+', blue_other[:, 0], blue_other[:, 1], 'bo')
     plt.xlabel('PCA1')
     plt.ylabel('PCA2')
-    plt.savefig('./plot_' + str(num_other) + '_' + str(dim) + '_sparse.png')
+    plt.savefig('./plot2_' + str(num_other) + '_' + str(dim) + '_sparse.png')
 
 for dim in [5, 10, 50, 100, 250, 500]:
     solve(dim, .333)
