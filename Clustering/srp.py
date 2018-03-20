@@ -35,9 +35,6 @@ def decode_lines_of_csv(filename, lines):
             ret = np.vstack((ret, row))
     return ret[:, 1:]
 
-N = 200
-shaper = csr_matrix((N, ncols))
-srp = SparseRandomProjection(eps = 0.5)
 # srp.fit(shaper)
 
 print("Loading pie vectors...")
@@ -51,27 +48,17 @@ print(imagen.shape)
 print("Merging arrays...")
 contaminated = np.vstack((pie, imagen))
 
-#print("Sparse random projection...")
-#small = srp.fit_transform(contaminated)
+print("Sparse random projection...")
 
-print("Computing principal components...")
-n_c = 500
+# print("Computing principal components...")
+# n_c = 500
 
-spca = MiniBatchSparsePCA(n_components=n_c, verbose = 1)
-spca.fit(contaminated)
-
-spca_pie = spca.transform(pie)
-spca_imagen = spca.transform(imagen)
-
-csv_utils.encode_csv('./spca_pie_large.csv', spca_pie)
-csv_utils.encode_csv('./spca_sushi_large.csv', spca_imagen)
-
-pca = PCA(n_components = n_c)
-pca.fit(contaminated)
-
-pca_pie = pca.transform(pie)
-pca_imagen = pca.transform(imagen)
-
-csv_utils.encode_csv('./pca_pie_large.csv', pca_pie)
-csv_utils.encode_csv('./pca_sushi_large.csv', pca_imagen)
-
+# spca = MiniBatchSparsePCA(n_components=n_c, verbose = 1)
+# spca.fit(contaminated)
+srp = SparseRandomProjection()
+small = srp.fit(contaminated)
+srp_pie = srp.transform(pie)
+srp_imagen = srp.transform(imagen)
+print(srp_pie.shape)
+csv_utils.encode_csv('./srp_pie_large.csv', srp_pie)
+csv_utils.encode_csv('./srp_sushi_large.csv', srp_imagen)
