@@ -55,7 +55,9 @@ contaminated = np.vstack((pie, imagen))
 #small = srp.fit_transform(contaminated)
 
 print("Computing principal components...")
-spca = MiniBatchSparsePCA(n_components=20, verbose = 1)
+n_c = 2000
+
+spca = MiniBatchSparsePCA(n_components=n_c, verbose = 1)
 spca.fit(contaminated)
 
 spca_pie = spca.transform(pie)
@@ -64,7 +66,7 @@ spca_imagen = spca.transform(imagen)
 csv_utils.encode_csv('./spca_pie.csv', spca_pie)
 csv_utils.encode_csv('./spca_sushi.csv', spca_imagen)
 
-pca = PCA(n_components = 20)
+pca = PCA(n_components = n_c)
 pca.fit(contaminated)
 
 pca_pie = pca.transform(pie)

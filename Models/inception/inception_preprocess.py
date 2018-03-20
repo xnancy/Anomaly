@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -418,7 +417,10 @@ restorer = tf.train.Saver(variables_to_restore)
 init = tf.initialize_all_variables()
 
 # process image sample 
-files = [join("/home/ec2-user/Data/imagen_clean/", f) for f in listdir("/home/ec2-user/Data/imagen_clean/") if isfile(join("/home/ec2-user/Data/imagen_clean/", f))]
+# files = [join("/home/ec2-user/Data/imagen_clean/", f) for f in listdir("/home/ec2-user/Data/imagen_clean/") if isfile(join("/home/ec2-user/Data/imagen_clean/", f))]
+pie = "/home/ec2-user/Data/food-101/images/sushi"
+files = [join(pie, f) for f in listdir(pie) if isfile(join(pie, f))]
+
 # files = [join("/home/ec2-user/Data/dragonfly/img/", f) for f in listdir("/home/ec2-user/Data/dragonfly/img/") if isfile(join("/home/ec2-user/Data/dragonfly/img/", f))]
 # can i even classify a dog?
 # files = ["/home/ec2-user/Models/inception/dog_image.png"] # + files
@@ -441,7 +443,7 @@ gc.enable()
 
 cfg = tf.ConfigProto(intra_op_parallelism_threads=10)
 
-with tf.Session(config=cfg) as sess, open('./imagen_prepool.csv', 'wb') as vfile:
+with tf.Session(config=cfg) as sess, open('./sushi_prepool.csv', 'wb') as vfile:
     sess.run(init)
     restorer.restore(sess,model_path)
     tf.initialize_all_variables()
@@ -490,7 +492,7 @@ with tf.Session(config=cfg) as sess, open('./imagen_prepool.csv', 'wb') as vfile
         print(key.eval()) # name of file
         print(pre_pool_out.shape)
         pre_pool_vector = pre_pool_out.ravel().tolist()
-        vec_writer.writerow(pre_pool_vector)
+        vec_writer.writerow([key] + pre_pool_vector)
         print(legend[np.argmax(logits_out)])
 
     print("done!")
