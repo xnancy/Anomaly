@@ -35,6 +35,8 @@ pie_vec = decode_bad_csv('./pie_prepool.csv')
 sushi_vec = decode_bad_csv('./sushi_prepool.csv')
 all_vec = np.vstack((pie_vec, sushi_vec))
 
+import os
+# os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 with tf.device('/device:GPU:1'):
     training_data = tf.constant(all_vec, dtype=tf.float32, name="Input")
 
@@ -68,7 +70,7 @@ with tf.device('/device:GPU:1'):
 with tf.Session() as sess:
     sess.run(init_step)
     saver = tf.train.Saver()
-    for i in range(1000):
+    for i in range(10000):
         #batch = minibatches[i % len(minibatches)]
         _, lsc = sess.run([train_step, least_squares_cost])
         print(lsc)
