@@ -56,15 +56,16 @@ contaminated = np.vstack((pie, imagen))
 
 print("Computing principal components...")
 n_c = 500
-'''
+
 spca = MiniBatchSparsePCA(n_components=n_c, verbose = 1)
 spca.fit(contaminated)
 
 spca_pie = spca.transform(pie)
 spca_imagen = spca.transform(imagen)
 
-csv_utils.encode_csv('./spca_pie_large.csv', spca_pie)
-csv_utils.encode_csv('./spca_sushi_large.csv', spca_imagen)
+csv_utils.encode_csv('./spca_pie2_large.csv', spca_pie)
+csv_utils.encode_csv('./spca_imagen_large.csv', spca_imagen)
+
 '''
 pca = PCA(n_components = n_c)
 pca.fit(contaminated)
@@ -74,4 +75,4 @@ pca_imagen = pca.transform(imagen)
 
 csv_utils.encode_csv('./pca_pie2_large.csv', pca_pie)
 csv_utils.encode_csv('./pca_imagen_large.csv', pca_imagen)
-
+'''

@@ -6,8 +6,8 @@ from sklearn.mixture import GaussianMixture
 from sklearn.mixture import BayesianGaussianMixture
 from csv_utils import decode_csv
 
-pie = decode_csv('./pca_pie2_large.csv')
-imagen = decode_csv('./pca_imagen_large.csv')
+pie = decode_csv('./srp_pie2_large.csv')
+imagen = decode_csv('./srp_imagen_large.csv')
 # pie = decode_csv('./pie_prepool.csv')[1:]
 # imagen = decode_csv('./sushi_prepool.csv')[1:]
 
@@ -55,9 +55,9 @@ def solve(dim, proportion = 1.0):
         blue_other[:, 0], blue_other[:, 1], 'bo'
     )
     plt.title('theme-pie v. anomaly', fontweight="bold")
-    plt.xlabel('PCA1', fontweight="bold")
-    plt.ylabel('PCA2', fontweight="bold")
-    plt.savefig('./plot' + str(num_other) + '_' + str(dim) + '_p'+ str(pct(z1)) + '_r'+str(pct(1 - z1)) +'pca.png')
+    plt.xlabel('SRP1', fontweight="bold")
+    plt.ylabel('SRP2', fontweight="bold")
+    plt.savefig('./plot' + str(num_other) + '_' + str(dim) + '_p'+ str(pct(z1)) + '_r'+str(pct(1 - z1)) +'srp.png')
     plt.clf()
-for dim in [5, 10, 50, 100, 250, 500]:
+for dim in [5, 10, 50, 100, 250, 500, 6000]:
     solve(dim, .333)

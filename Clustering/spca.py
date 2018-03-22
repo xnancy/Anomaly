@@ -6,8 +6,11 @@ from sklearn.mixture import GaussianMixture
 from sklearn.mixture import BayesianGaussianMixture
 from csv_utils import decode_csv
 
-pie = decode_csv('./pca_pie2_large.csv')
-imagen = decode_csv('./pca_imagen_large.csv')
+
+
+
+pie = decode_csv('./spca_pie2_large.csv')
+imagen = decode_csv('./spca_imagen_large.csv')
 # pie = decode_csv('./pie_prepool.csv')[1:]
 # imagen = decode_csv('./sushi_prepool.csv')[1:]
 
@@ -48,16 +51,15 @@ def solve(dim, proportion = 1.0):
     blue_pie = cont[:1000][est1 == 1]
     blue_other = cont[1000:][est2 == 1]
     
-    # plt.axes('3d')
-    plt.plot(red_pie[:, 0], red_pie[:, 1] ,'r+', 
-        red_other[:, 0], red_other[:, 1], 'ro',
-        blue_pie[:, 0], blue_pie[:, 1], 'b+', 
-        blue_other[:, 0], blue_other[:, 1], 'bo'
-    )
-    plt.title('theme-pie v. anomaly', fontweight="bold")
-    plt.xlabel('PCA1', fontweight="bold")
-    plt.ylabel('PCA2', fontweight="bold")
-    plt.savefig('./plot' + str(num_other) + '_' + str(dim) + '_p'+ str(pct(z1)) + '_r'+str(pct(1 - z1)) +'pca.png')
+    plt.plot(red_pie[:, 0], red_pie[:, 1], 'r+', label = "a")
+    plt.plot(red_other[:, 0], red_other[:, 1], 'ro', label="b")
+    plt.plot(blue_pie[:, 0], blue_pie[:, 1], 'b+', label="c")
+    plt.plot(blue_other[:, 0], blue_other[:, 1], 'bo', label="d")
+    # plt.legend()
+    plt.title('theme-pie v. anomaly', fontweight='bold')
+    plt.xlabel('SPCA1', fontweight='bold')
+    plt.ylabel('SPCA2', fontweight='bold')
+    plt.savefig('./plot2' + str(num_other) + '_' + str(dim) + '_p'+ str(pct(z1)) + '_r'+str(pct(1 - z1)) +'spca.png')
     plt.clf()
 for dim in [5, 10, 50, 100, 250, 500]:
     solve(dim, .333)
